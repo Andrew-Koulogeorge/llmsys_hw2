@@ -24,10 +24,9 @@ def RParam(*shape):
     r = 0.1 * (minitorch.rand(shape, backend=BACKEND) - 0.5)
     return minitorch.Parameter(r)
 
-def binary_cross_entropy_loss(out, y):
+def binary_cross_entropy_loss(out: minitorch.Tensor, y: minitorch.Tensor):
     """
-    BCE loss
-    
+    BCE loss 
     out: output of the neural network, already normalized as we apply sigmoid as last layer (batch_size,)
     y: true labels [0, 1] (batch_size,)
     """
@@ -35,8 +34,12 @@ def binary_cross_entropy_loss(out, y):
     # BEGIN ASSIGN2_3
     # TODO
     # 1. Create ones tensor with same shape as y
+    ones = minitorch.tensor_functions.ones(y.shape)
+    
     # 2. Compute log softmax of out and (ones - out)
+    
     # 3. Calculate binary cross entropy and take mean
+    
     # HINT: Use minitorch.tensor_functions.ones
     
     raise NotImplementedError("cross_entropy_loss not implemented")
@@ -50,11 +53,12 @@ class Linear(minitorch.Module):
         # BEGIN ASSIGN2_2
         # TODO
         # 1. Initialize self.weights to be a random parameter of (in_size, out_size).
+        self.weights = RParam(in_size, out_size)
         # 2. Initialize self.bias to be a random parameter of (out_size)
+        self.bias = RParam(out_size)
         # 3. Set self.out_size to be out_size
+        self.out_size = out_size
         # HINT: make sure to use the RParam function
-    
-        raise NotImplementedError("Linear not implemented")
     
         # END ASSIGN2_2
 
@@ -65,12 +69,14 @@ class Linear(minitorch.Module):
         # BEGIN ASSIGN2_2
         # TODO
         # 1. Reshape the input x to be of size (batch, in_size)
+        
         # 2. Reshape self.weights to be of size (in_size, self.out_size)
+        
         # 3. Apply Matrix Multiplication on input x and self.weights, and reshape the output to be of size (batch, self.out_size)
         # 4. Add self.bias
+        out = minitorch.tensor_functions.MatMul.apply(self.x, self.weights) + self.bias
         # HINT: You can use the view function of minitorch.tensor for reshape
-
-        raise NotImplementedError("Linear forward not implemented")
+    
     
         # END ASSIGN2_2
         
@@ -103,8 +109,8 @@ class Network(minitorch.Module):
         # TODO
         # 1. Construct two linear layers: the first one is embedding_dim * hidden_dim
         #       the second one is hidden_dim * 1
-
-        raise NotImplementedError("Network not implemented")
+        self.lin1 = Linear(in_size=embedding_dim, out_size=hidden_dim)
+        self.lin2 = Linear(in_size=hidden_dim, out_size=1)
         
         # END ASSIGN2_2
         
@@ -117,14 +123,19 @@ class Network(minitorch.Module):
     
         # BEGIN ASSIGN2_2
         # TODO
+        B,T,d = x.shape
         # 1. Average the embeddings on the sentence length dimension to obtain a tensor of (batch, embedding_dim)
+        x = embeddings.mean(dim=1)
         # 2. Apply the first linear layer
+        x = self.lin1(x)
         # 3. Apply ReLU and dropout (with dropout probability=self.dropout_prob)
+        x = minitorch.nn.dropout(minitorch.tensor.relu(x), self.dropout_prob)
         # 4. Apply the second linear layer
+        x = self.lin2(x)
         # 5. Apply sigmoid and reshape to (batch)
+        x = minitorch.tensor.sigmoid(x).reshape(B)
+        return x
         # HINT: You can use minitorch.nn.dropout for dropout, and minitorch.tensor.relu for ReLU
-        
-        raise NotImplementedError("Network forward not implemented")
     
         # END ASSIGN2_2
 
