@@ -139,9 +139,23 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
         3. Otherwise, the derivative should be propagated via chain rule
     """
     # BEGIN ASSIGN2_1
-    # TODO
-   
-    raise NotImplementedError("Task Autodiff Not Implemented Yet")
+    topo_order = topological_sort(variable)
+    
+    # map from Node -> dsink_dnode 
+    dsink_dnode = {variable:deriv} 
+    
+    for node in topo_order:
+        if node.is_leaf():
+            # set gradient atribute if no more parents
+            node.accumulate_derivative(dsink_dnode[node.unique_id])
+        else:
+            # compute dsink_dnode from sum (dsink_dpar * dpar_dnode)
+            for parent, dsink_dparent in node.chain_rule(dsink_dnode[node]):
+                if parent.unique_id not in dsink_dnode:
+                    dsink_dnode[parent.unique_id] = dsink_dparent
+                else:
+                    dsink_dnode[parent.unique_id] += dsink_dparent # summing diff paths to sink
+                    
     # END ASSIGN2_1
 
 
