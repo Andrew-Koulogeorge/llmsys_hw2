@@ -105,10 +105,20 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
         2. When the children nodes of the current node are visited, add the current node 
             at the front of the result order list.
     """
-    # BEGIN ASSIGN2_1
-    # TODO
-    
-    raise NotImplementedError("Task Autodiff Not Implemented Yet")
+    # we can assume the graph has no cycles
+
+    # reverse topological sorting with dfs -> place node into list by finish time
+    rev_topo_order = []
+    def dfs(node: Variable):
+        if node.is_constant():
+            return
+        # loop over parents of this node and visit them
+        for parent in node.parents:
+            dfs(parent)
+        rev_topo_order.append(node)
+    dfs(variable)
+    rev_topo_order.reverse()
+    return rev_topo_order
     # END ASSIGN2_1
 
 
