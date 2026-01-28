@@ -65,8 +65,10 @@ project/
                               the sentence sentiment classification task 
                               (problem 2 & problem 3)
 ```
+
+## Copy kernel code
 Before starting HW2, please make sure you have copied
-src/combine.cu from HW1 into the corresponding path in HW2.
+`src/combine.cu` from HW1 into the corresponding path in HW2.
 After that, run the following command to compile the CUDA kernel:
 ```bash
 mkdir -p minitorch/cuda_kernels 
