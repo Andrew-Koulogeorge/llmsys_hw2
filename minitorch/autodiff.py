@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Iterable, List, Tuple
-
+from collections import deque
 from typing_extensions import Protocol
 
 
@@ -106,20 +106,21 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
             at the front of the result order list.
     """
     # we can assume the graph has no cycles
-
     # reverse topological sorting with dfs -> place node into list by finish time
-    rev_topo_order = []
+    rev_topo_order = deque()
+    visited = set()
     def dfs(node: Variable):
         if node.is_constant():
             return
         # loop over parents of this node and visit them
+        visited.add(node.unique_id)
         for parent in node.parents:
+            if parent.unique_id in visited:
+                continue
             dfs(parent)
-        rev_topo_order.append(node)
+        rev_topo_order.appendleft(node)
     dfs(variable)
-    rev_topo_order.reverse()
-    return rev_topo_order
-    # END ASSIGN2_1
+    return list(rev_topo_order)
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -138,25 +139,23 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
         2. If the node is a leaf, the derivative should be accumulated
         3. Otherwise, the derivative should be propagated via chain rule
     """
-    # BEGIN ASSIGN2_1
     topo_order = topological_sort(variable)
     
     # map from Node -> dsink_dnode 
-    dsink_dnode = {variable:deriv} 
+    dsink_dnode = {variable.unique_id:deriv} 
     
     for node in topo_order:
         if node.is_leaf():
             # set gradient atribute if no more parents
             node.accumulate_derivative(dsink_dnode[node.unique_id])
-        else:
-            # compute dsink_dnode from sum (dsink_dpar * dpar_dnode)
-            for parent, dsink_dparent in node.chain_rule(dsink_dnode[node]):
-                if parent.unique_id not in dsink_dnode:
-                    dsink_dnode[parent.unique_id] = dsink_dparent
-                else:
-                    dsink_dnode[parent.unique_id] += dsink_dparent # summing diff paths to sink
-                    
-    # END ASSIGN2_1
+            continue
+        
+        # compute dsink_dnode from sum (dsink_dpar * dpar_dnode)
+        for parent, dsink_dparent in node.chain_rule(dsink_dnode[node.unique_id]):
+            if parent.unique_id not in dsink_dnode:
+                dsink_dnode[parent.unique_id] = dsink_dparent
+            else:
+                dsink_dnode[parent.unique_id] += dsink_dparent # summing diff paths to sink
 
 
 @dataclass
