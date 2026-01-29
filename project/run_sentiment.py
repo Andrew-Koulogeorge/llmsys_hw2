@@ -37,12 +37,10 @@ def binary_cross_entropy_loss(out: minitorch.Tensor, y: minitorch.Tensor):
     ones = minitorch.tensor_functions.ones(y.shape)
     
     # 2. Compute log softmax of out and (ones - out)
-    
     # 3. Calculate binary cross entropy and take mean
-    
+    loss = y*minitorch.tensor.log(out) + (ones-y)*minitorch.tensor.log(ones-out)
+    return loss.mean()
     # HINT: Use minitorch.tensor_functions.ones
-    
-    raise NotImplementedError("cross_entropy_loss not implemented")
     
     # END ASSIGN2_3
 
@@ -69,12 +67,12 @@ class Linear(minitorch.Module):
         # BEGIN ASSIGN2_2
         # TODO
         # 1. Reshape the input x to be of size (batch, in_size)
-        
         # 2. Reshape self.weights to be of size (in_size, self.out_size)
         
         # 3. Apply Matrix Multiplication on input x and self.weights, and reshape the output to be of size (batch, self.out_size)
         # 4. Add self.bias
         out = minitorch.tensor_functions.MatMul.apply(self.x, self.weights) + self.bias
+        return out
         # HINT: You can use the view function of minitorch.tensor for reshape
     
     
@@ -223,13 +221,23 @@ class SentenceSentimentTrain:
                 # BEGIN ASSIGN2_3
                 # TODO
                 # 1. Create x and y using minitorch.tensor function through the SimpleOps backend (cpu backend)
-                # 2. Get the model output (as out)
-                # 3. Calculate the loss using binary_cross_entropy_loss function
-                # 4. Call backward function of the loss
-                # 5. Use Optimizer to take a gradient step
+                assert isinstance(X_train,list), f"X_train is type: {type(X_train)}"
+                assert isinstance(y_train,list), f"y_train is type: {type(y_train)}"
+                X_batch = minitorch.tensor(X_train[example_num:example_num+batch_size, :, :])
+                y_batch = minitorch.tensor(y_train[example_num:example_num+batch_size])
                 
-                raise NotImplementedError("SentenceSentimentTrain train not implemented")
-
+                # 2. Get the model output (as out)
+                pred = model(X_batch)
+                
+                # 3. Calculate the loss using binary_cross_entropy_loss function
+                assert pred.shape == y_batch.shape
+                loss = binary_cross_entropy_loss(pred, y_batch)
+                
+                # 4. Call backward function of the loss
+                loss.backward()
+                
+                # 5. Use Optimizer to take a gradient step
+                optim.step()
                 # END ASSIGN2_3
                 
                 
@@ -247,12 +255,17 @@ class SentenceSentimentTrain:
                 # BEGIN ASSIGN2_3
                 # TODO
                 # 1. Create x and y using minitorch.tensor function through our CudaKernelOps backend
+                assert isinstance(X_val,list), f"X_train is type: {type(X_val)}"
+                assert isinstance(y_val,list), f"y_train is type: {type(y_val)}"
+                X_batch_val = minitorch.tensor(X_val[example_num:example_num+batch_size, :, :])
+                y_batch_val = minitorch.tensor(y_val[example_num:example_num+batch_size])
                 # 2. Get the output of the model
+                pred_val = model(X_batch_val)
                 # 3. Obtain validation predictions using the get_predictions_array function, and add to the validation_predictions list
+                preds_list = get_predictions_array(y_batch_val, pred_val)
+                validation_predictions.extend(preds_list)
                 # 4. Obtain the validation accuracy using the get_accuracy function, and add to the validation_accuracy list
-                
-                raise NotImplementedError("SentenceSentimentTrain train not implemented")
-                
+                validation_accuracy.append(get_accuracy(preds_list))                
                 # END ASSIGN2_3
                 
                 model.train()
