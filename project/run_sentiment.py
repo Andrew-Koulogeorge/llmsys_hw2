@@ -33,12 +33,13 @@ def binary_cross_entropy_loss(out: minitorch.Tensor, y: minitorch.Tensor):
 
     # BEGIN ASSIGN2_3
     # TODO
+    assert out.shape == y.shape
     # 1. Create ones tensor with same shape as y
     ones = minitorch.tensor_functions.ones(y.shape)
     
     # 2. Compute log softmax of out and (ones - out)
     # 3. Calculate binary cross entropy and take mean
-    loss = y*minitorch.tensor.log(out) + (ones-y)*minitorch.tensor.log(ones-out)
+    loss = -1*(y*out.log() + (ones-y)*((ones-out).log()))
     return loss.mean()
     # HINT: Use minitorch.tensor_functions.ones
     
@@ -224,11 +225,12 @@ class SentenceSentimentTrain:
                 # 1. Create x and y using minitorch.tensor function through the SimpleOps backend (cpu backend)
                 assert isinstance(X_train,list), f"X_train is type: {type(X_train)}"
                 assert isinstance(y_train,list), f"y_train is type: {type(y_train)}"
-                X_batch = minitorch.tensor(X_train[example_num:example_num+batch_size, :, :])
+                X_batch = minitorch.tensor(X_train[example_num:example_num+batch_size])
                 y_batch = minitorch.tensor(y_train[example_num:example_num+batch_size])
                 
                 # 2. Get the model output (as out)
                 pred = model(X_batch)
+                assert pred.shape == (batch_size,) 
                 
                 # 3. Calculate the loss using binary_cross_entropy_loss function
                 assert pred.shape == y_batch.shape
@@ -241,9 +243,8 @@ class SentenceSentimentTrain:
                 optim.step()
                 # END ASSIGN2_3
                 
-                
                 # Save training results
-                train_predictions += get_predictions_array(y, out)
+                train_predictions += get_predictions_array(y_batch, pred)
                 total_loss += loss[0]
                 n_batches += 1
         
@@ -258,10 +259,11 @@ class SentenceSentimentTrain:
                 # 1. Create x and y using minitorch.tensor function through our CudaKernelOps backend
                 assert isinstance(X_val,list), f"X_train is type: {type(X_val)}"
                 assert isinstance(y_val,list), f"y_train is type: {type(y_val)}"
-                X_batch_val = minitorch.tensor(X_val[example_num:example_num+batch_size, :, :])
-                y_batch_val = minitorch.tensor(y_val[example_num:example_num+batch_size])
+                X_batch_val = minitorch.tensor(X_val)
+                y_batch_val = minitorch.tensor(y_val)
                 # 2. Get the output of the model
                 pred_val = model(X_batch_val)
+                assert pred_val.shape == y_batch_val.shape
                 # 3. Obtain validation predictions using the get_predictions_array function, and add to the validation_predictions list
                 preds_list = get_predictions_array(y_batch_val, pred_val)
                 validation_predictions.extend(preds_list)
