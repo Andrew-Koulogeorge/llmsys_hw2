@@ -67,11 +67,12 @@ class Linear(minitorch.Module):
         # BEGIN ASSIGN2_2
         # TODO
         # 1. Reshape the input x to be of size (batch, in_size)
+        assert x.shape == (batch, in_size)
         # 2. Reshape self.weights to be of size (in_size, self.out_size)
-        
+        assert self.weights.value.shape == (in_size, self.out_size)
         # 3. Apply Matrix Multiplication on input x and self.weights, and reshape the output to be of size (batch, self.out_size)
         # 4. Add self.bias
-        out = minitorch.tensor_functions.MatMul.apply(self.x, self.weights) + self.bias
+        out = x @ self.weights.value + self.bias.value
         return out
         # HINT: You can use the view function of minitorch.tensor for reshape
     
@@ -121,17 +122,17 @@ class Network(minitorch.Module):
     
         # BEGIN ASSIGN2_2
         # TODO
-        B,T,d = x.shape
+        B,T,d = embeddings.shape
         # 1. Average the embeddings on the sentence length dimension to obtain a tensor of (batch, embedding_dim)
-        x = embeddings.mean(dim=1)
+        x = embeddings.mean(dim=1).view(B,d)
         # 2. Apply the first linear layer
         x = self.lin1(x)
         # 3. Apply ReLU and dropout (with dropout probability=self.dropout_prob)
-        x = minitorch.nn.dropout(minitorch.tensor.relu(x), self.dropout_prob)
+        x = minitorch.nn.dropout(x.relu(), self.dropout_prob)
         # 4. Apply the second linear layer
         x = self.lin2(x)
         # 5. Apply sigmoid and reshape to (batch)
-        x = minitorch.tensor.sigmoid(x).reshape(B)
+        x = x.sigmoid().view(B)
         return x
         # HINT: You can use minitorch.nn.dropout for dropout, and minitorch.tensor.relu for ReLU
     
